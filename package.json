@@ -12,7 +12,7 @@
     "verify-build": "dwc-plugin-verify-build"
   },
   "dependencies": {
-    "dwc-config-backup-core": "file:../dwc-config-backup-core/dwc-config-backup-core-0.1.0.tgz",
+    "dwc-config-backup-core": "github:jaysuk/dwc-config-backup-core#main",
     "dwc-plugin-runtime": "github:jaysuk/dwc-plugin-runtime#v0.8.4",
     "jszip": "^3.10.1"
   },

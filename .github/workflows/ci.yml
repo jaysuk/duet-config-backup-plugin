@@ -2,4 +2,7 @@ name: CI
 on: [push, pull_request]
 jobs:
   test:
-    uses: jaysuk/dwc-plugin-test-kit/.github/workflows/dwc-plugin-ci.yml@main
+    uses: jaysuk/dwc-plugin-test-kit/.github/workflows/dwc-plugin-ci.yml@v0.2.4
+    with:
+      dwc-ref: v3.7-dev
+      kit-ref: v0.2.4
