@@ -1,0 +1,5 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    uses: jaysuk/dwc-plugin-test-kit/.github/workflows/dwc-plugin-ci.yml@main

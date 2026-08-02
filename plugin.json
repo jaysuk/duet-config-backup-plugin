@@ -1,0 +1,15 @@
+{
+	"id": "DuetConfigBackup",
+	"name": "Duet Config Backup",
+	"author": "James Skitt",
+	"version": "1.0.0",
+	"license": "GPL-3.0-or-later",
+	"homepage": "https://github.com/jaysuk/duet-config-backup-plugin",
+	"dwcVersion": "auto-major",
+	"tags": [
+		"backup",
+		"restore",
+		"config",
+		"utility"
+	]
+}

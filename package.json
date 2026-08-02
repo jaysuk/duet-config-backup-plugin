@@ -1,0 +1,29 @@
+{
+  "name": "duet-config-backup-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/jaysuk/duet-config-backup-plugin",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "dwc-plugin-typecheck",
+    "verify-build": "dwc-plugin-verify-build"
+  },
+  "dependencies": {
+    "dwc-config-backup-core": "file:../dwc-config-backup-core/dwc-config-backup-core-0.1.0.tgz",
+    "dwc-plugin-runtime": "github:jaysuk/dwc-plugin-runtime#v0.8.4",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vitest/coverage-v8": "^4.1.8",
+    "@vue/test-utils": "^2.4.6",
+    "dwc-plugin-test-kit": "github:jaysuk/dwc-plugin-test-kit#v0.2.4",
+    "happy-dom": "^15.11.7",
+    "vitest": "^4.1.8",
+    "vue": "^3.5.30",
+    "vuetify": "^4.1.0"
+  }
+}

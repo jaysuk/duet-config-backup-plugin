@@ -1,0 +1,6 @@
+node_modules/
+dist/
+pkg/
+*.zip
+coverage/
+src/plugins/_typecheck_*
