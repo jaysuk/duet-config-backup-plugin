@@ -12,6 +12,27 @@ modes, destinations, credential storage).
 Settings → General → Plugins → Install plugin, then find it under **Plugins → Duet Config Backup**
 (`/Plugins/DuetConfigBackup`).
 
+## Building the plugin ZIP yourself
+
+If you're not installing a pre-built release, DWC's own `build-plugin` script needs this repo's
+dependencies installed FIRST - it does not install them for you:
+
+```bash
+git clone https://github.com/jaysuk/duet-config-backup-plugin.git
+cd duet-config-backup-plugin
+npm install                                       # pulls dwc-config-backup-core, dwc-plugin-runtime, jszip
+
+cd /path/to/DuetWebControl                        # a DWC 3.7 checkout
+npm run build-plugin -- /path/to/duet-config-backup-plugin
+```
+
+Skipping `npm install` fails with `globals option: The function returned undefined, but expected
+string` - the build script can't find the unresolved imports, since they were never installed.
+
+Two of this plugin's dependencies (`dwc-config-backup-core`, `dwc-plugin-runtime`) install directly
+from GitHub rather than npmjs.org, so `npm install` needs working `git` access - if your network/CI
+policy blocks direct git fetches, that step will fail even though the command itself is correct.
+
 ## Relationship to Flexible Layouts
 
 This plugin and Flexible Layouts' own backup feature share one implementation —

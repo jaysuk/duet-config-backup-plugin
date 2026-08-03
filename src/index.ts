@@ -25,6 +25,10 @@ registerRoute(ConfigBackupPage, {
 			icon: "mdi-archive-arrow-down",
 			caption: "plugins.duetConfigBackup.configBackup.title",
 			path: ROUTE_PATH,
+			// This is a viewport-filling page (see ConfigBackupPage.vue's dwc-page-fill wrapper) -
+			// matches DWC's own pageFill convention (Settings, HeightMap, ObjectModelBrowser, ...),
+			// which cross-page scrollBehavior reads to decide whether to land at the page's bottom.
+			pageFill: true,
 		},
 	},
 });
