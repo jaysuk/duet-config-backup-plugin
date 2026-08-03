@@ -6,6 +6,7 @@
 				<div class="text-title-medium">{{ $t("plugins.duetConfigBackup.configBackup.title") }}</div>
 				<v-spacer />
 				<v-btn icon="mdi-help-circle-outline" variant="text" :title="$t('plugins.duetConfigBackup.help.title')" @click="helpOpen = true" />
+				<v-btn icon="mdi-information-outline" variant="text" title="About, version & diagnostics" @click="aboutOpen = true" />
 			</div>
 
 			<v-tabs v-model="tab" class="mb-3 flex-shrink-0">
@@ -22,19 +23,31 @@
 		</v-container>
 
 		<ConfigBackupHelpDialog v-model="helpOpen" />
+
+		<AboutDialog v-model="aboutOpen" :plugin-id="PLUGIN_MANIFEST_ID" title="Duet Config Backup"
+					 description="Whole-machine configuration backup & restore - the same feature that ships inside Flexible Layouts, as its own standalone plugin."
+					 :model="machineStore.model" :repo="DOCS_URL" :docs-url="`${DOCS_URL}/blob/main/docs.md`"
+					 :diagnostic-state="{ activeTab: tab }" :show-updates="false" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { AboutDialog } from "dwc-plugin-runtime";
+
+import { useMachineStore } from "@/stores/machine";
 
 import BackupCreatePanel from "./BackupCreatePanel.vue";
 import RestorePanel from "./RestorePanel.vue";
 import CloudPanel from "./CloudPanel.vue";
 import ConfigBackupHelpDialog from "./ConfigBackupHelpDialog.vue";
+import { DOCS_URL, PLUGIN_MANIFEST_ID } from "../model/constants";
+
+const machineStore = useMachineStore();
 
 const tab = ref("create");
 const helpOpen = ref(false);
+const aboutOpen = ref(false);
 </script>
 
 <style scoped>
