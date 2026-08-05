@@ -29,9 +29,9 @@ npm run build-plugin -- /path/to/duet-config-backup-plugin
 Skipping `npm install` fails with `globals option: The function returned undefined, but expected
 string` - the build script can't find the unresolved imports, since they were never installed.
 
-Two of this plugin's dependencies (`dwc-config-backup-core`, `dwc-plugin-runtime`) install directly
-from GitHub rather than npmjs.org, so `npm install` needs working `git` access - if your network/CI
-policy blocks direct git fetches, that step will fail even though the command itself is correct.
+Both [`dwc-config-backup-core`](https://www.npmjs.com/package/dwc-config-backup-core) and
+[`dwc-plugin-runtime`](https://www.npmjs.com/package/dwc-plugin-runtime) are published on npmjs.org,
+so `npm install` needs no git access - a plain registry install, same as any other dependency.
 
 ## Relationship to Flexible Layouts
 
