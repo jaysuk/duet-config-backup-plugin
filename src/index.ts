@@ -1,4 +1,4 @@
-import { registerPluginMessages, registerRoute, unregisterRoute } from "@/plugins";
+import { isPluginLoaded, registerPluginMessages, registerRoute, unregisterRoute } from "@/plugins";
 import Events from "@/utils/events";
 import { installErrorCapture } from "dwc-plugin-runtime";
 import { configureHost } from "dwc-config-backup-core";
@@ -29,6 +29,14 @@ registerRoute(ConfigBackupPage, {
 			// matches DWC's own pageFill convention (Settings, HeightMap, ObjectModelBrowser, ...),
 			// which cross-page scrollBehavior reads to decide whether to land at the page's bottom.
 			pageFill: true,
+			// Flexible Layouts ("FlexibleLayouts", its plugin.json id - hardcoded rather than imported,
+			// since these are two independently-published plugin repos with no shared constants module)
+			// has this exact feature built in. If both happen to be installed, defer to FL's copy rather
+			// than showing two identical nav entries - `condition` is evaluated reactively at render
+			// time (not just once at registration), so this is correct regardless of which plugin's
+			// index.ts happens to run first during boot; by the time the nav drawer actually renders,
+			// every installed plugin has already finished loading either way.
+			condition: () => !isPluginLoaded("FlexibleLayouts"),
 		},
 	},
 });

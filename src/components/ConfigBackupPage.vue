@@ -5,7 +5,7 @@
 				<v-icon size="large" class="me-3">mdi-archive-arrow-down</v-icon>
 				<div class="text-title-medium">{{ $t("plugins.duetConfigBackup.configBackup.title") }}</div>
 				<v-spacer />
-				<v-btn icon="mdi-help-circle-outline" variant="text" :title="$t('plugins.duetConfigBackup.help.title')" @click="helpOpen = true" />
+				<v-btn icon="mdi-help-circle-outline" variant="text" :title="$t('plugins.duetConfigBackup.help.title')" @click="openHelpAt('')" />
 				<v-btn icon="mdi-information-outline" variant="text" title="About, version & diagnostics" @click="aboutOpen = true" />
 			</div>
 
@@ -18,11 +18,11 @@
 			<v-window v-model="tab" :touch="false" :transition="false" :reverse-transition="false" class="cb-window">
 				<v-window-item value="create"><BackupCreatePanel :active="tab === 'create'" /></v-window-item>
 				<v-window-item value="restore"><RestorePanel :active="tab === 'restore'" /></v-window-item>
-				<v-window-item value="cloud"><CloudPanel /></v-window-item>
+				<v-window-item value="cloud"><CloudPanel @help="openHelpAt" /></v-window-item>
 			</v-window>
 		</v-container>
 
-		<ConfigBackupHelpDialog v-model="helpOpen" />
+		<ConfigBackupHelpDialog v-model="helpOpen" :section="helpSection" />
 
 		<AboutDialog v-model="aboutOpen" :plugin-id="PLUGIN_MANIFEST_ID" title="Duet Config Backup"
 					 description="Whole-machine configuration backup & restore - the same feature that ships inside Flexible Layouts, as its own standalone plugin."
@@ -47,6 +47,14 @@ const machineStore = useMachineStore();
 
 const tab = ref("create");
 const helpOpen = ref(false);
+/** Which destination's instructions to scroll to, when the dialog was opened from a specific
+ *  destination's "Setup instructions" link rather than the generic "?" in the header. */
+const helpSection = ref<string | undefined>(undefined);
+
+function openHelpAt(section: string): void {
+	helpSection.value = section;
+	helpOpen.value = true;
+}
 const aboutOpen = ref(false);
 </script>
 

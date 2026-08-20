@@ -115,6 +115,11 @@
 						</v-chip>
 					</v-expansion-panel-title>
 					<v-expansion-panel-text>
+						<div class="mb-3">
+							<v-btn size="small" variant="tonal" prepend-icon="mdi-book-open-variant" @click="emit('help', 'duet')">
+								{{ $t("plugins.duetConfigBackup.configBackup.cloud.setupInstructions") }}
+							</v-btn>
+						</div>
 						<template v-if="!duetSession">
 							<v-text-field v-model="duetEmail" :label="$t('plugins.duetConfigBackup.configBackup.cloud.email')"
 										  density="compact" variant="outlined" hide-details class="mb-2" />
@@ -153,6 +158,11 @@
 						</v-chip>
 					</v-expansion-panel-title>
 					<v-expansion-panel-text>
+						<div class="mb-3">
+							<v-btn size="small" variant="tonal" prepend-icon="mdi-book-open-variant" @click="emit('help', 'github')">
+								{{ $t("plugins.duetConfigBackup.configBackup.cloud.setupInstructions") }}
+							</v-btn>
+						</div>
 						<v-text-field v-model="githubRepo" :label="$t('plugins.duetConfigBackup.configBackup.github.repoLabel')"
 									  density="compact" variant="outlined" hide-details class="mb-2" />
 						<v-text-field v-model="githubBranch" :label="$t('plugins.duetConfigBackup.configBackup.github.branchLabel')"
@@ -181,6 +191,11 @@
 						</v-chip>
 					</v-expansion-panel-title>
 					<v-expansion-panel-text>
+						<div class="mb-3">
+							<v-btn size="small" variant="tonal" prepend-icon="mdi-book-open-variant" @click="emit('help', 'drive')">
+								{{ $t("plugins.duetConfigBackup.configBackup.cloud.setupInstructions") }}
+							</v-btn>
+						</div>
 						<v-alert v-if="!driveOriginOk" type="warning" variant="tonal" density="compact" class="mb-3">
 							{{ $t("plugins.duetConfigBackup.configBackup.drive.unavailableBody") }}
 						</v-alert>
@@ -206,6 +221,11 @@
 						</v-chip>
 					</v-expansion-panel-title>
 					<v-expansion-panel-text>
+						<div class="mb-3">
+							<v-btn size="small" variant="tonal" prepend-icon="mdi-book-open-variant" @click="emit('help', 'dropbox')">
+								{{ $t("plugins.duetConfigBackup.configBackup.cloud.setupInstructions") }}
+							</v-btn>
+						</div>
 						<v-text-field v-model="dropboxToken" :label="$t('plugins.duetConfigBackup.configBackup.dropbox.tokenLabel')" type="password"
 									  density="compact" variant="outlined" hide-details class="mb-2" />
 						<div class="text-caption text-medium-emphasis mb-2">{{ $t("plugins.duetConfigBackup.configBackup.dropbox.tokenHelp") }}</div>
@@ -229,6 +249,11 @@
 						</v-chip>
 					</v-expansion-panel-title>
 					<v-expansion-panel-text>
+						<div class="mb-3">
+							<v-btn size="small" variant="tonal" prepend-icon="mdi-book-open-variant" @click="emit('help', 'webdav')">
+								{{ $t("plugins.duetConfigBackup.configBackup.cloud.setupInstructions") }}
+							</v-btn>
+						</div>
 						<v-text-field v-model="webdavUrl" :label="$t('plugins.duetConfigBackup.configBackup.webdav.urlLabel')"
 									  density="compact" variant="outlined" hide-details class="mb-2" />
 						<div class="text-caption text-medium-emphasis mb-2">{{ $t("plugins.duetConfigBackup.configBackup.webdav.urlHelp") }}</div>
@@ -257,6 +282,10 @@
 </template>
 
 <script setup lang="ts">
+
+/** Each destination's own "Setup instructions" link - see the identical wiring in Flexible Layouts.
+ *  The section id is passed up so the help dialog opens scrolled to that destination. */
+const emit = defineEmits<{ help: [section: string] }>();
 import { computed, ref, watch } from "vue";
 
 import { downloadBlob } from "dwc-plugin-runtime";
