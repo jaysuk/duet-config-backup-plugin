@@ -1,6 +1,6 @@
 {
   "name": "duet-config-backup-plugin",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/jaysuk/duet-config-backup-plugin",
@@ -12,7 +12,7 @@
     "verify-build": "dwc-plugin-verify-build"
   },
   "dependencies": {
-    "dwc-config-backup-core": "^0.1.12",
+    "dwc-config-backup-core": "^0.1.13",
     "dwc-plugin-runtime": "^0.8.7",
     "jszip": "^3.10.1"
   },
