@@ -7,7 +7,8 @@ name: Release
 #   git tag v1.2.3 && git push origin v1.2.3
 #
 # This runs automatically, builds DuetConfigBackup-<version>.zip against DWC, and publishes a Release
-# for the tag with the ZIP attached.
+# for the tag with the ZIP attached. Notes are a generated Conventional-Commit changelog - no manual
+# step.
 #
 # You can also run it manually (Actions -> Release -> Run workflow) to build a ZIP as an artifact,
 # optionally against a different DWC ref.
@@ -25,6 +26,12 @@ on:
 permissions:
   contents: write # create the Release and upload the asset
 
+env:
+  # The Conventional-Commit changelog generator is shared across the Duet plugin family and lives in
+  # the runtime repo (single source of truth). Pinned to a ref; bump this one line to adopt changelog
+  # format changes. Source: jaysuk/dwc-plugin-runtime → scripts/changelog.mjs.
+  RUNTIME_REF: d077f81a11bb5af9a35fe39f7b82d789eab19896
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,6 +39,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           path: plugin
+          fetch-depth: 0 # full history + tags so the changelog generator can find the previous tag
+          fetch-tags: true
 
       - name: Checkout DuetWebControl
         uses: actions/checkout@v6
@@ -89,14 +98,37 @@ jobs:
           DWC_DIR: ${{ github.workspace }}/DuetWebControl
         run: npm run verify-build
 
+      # Release body = Conventional-Commit changelog + a footer with install instructions and the DWC
+      # version built against. Fetch the shared changelog generator from the runtime repo (single
+      # source of truth, pinned ref).
+      - name: Fetch shared release-notes generator
+        if: startsWith(github.ref, 'refs/tags/')
+        run: curl -fsSL "https://raw.githubusercontent.com/jaysuk/dwc-plugin-runtime/${RUNTIME_REF}/scripts/changelog.mjs" -o "$RUNNER_TEMP/changelog.mjs"
+
+      - name: Generate release notes
+        id: changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: plugin
+        env:
+          DWC_VERSION: ${{ steps.dwc.outputs.version }}
+          DWC_SHA: ${{ steps.dwc.outputs.sha }}
+          DWC_REF: ${{ steps.dwc.outputs.ref }}
+        run: |
+          {
+            echo 'body<<__CHANGELOG_EOF__'
+            node "$RUNNER_TEMP/changelog.mjs"
+            echo
+            node scripts/release-footer.mjs
+            echo
+            echo '__CHANGELOG_EOF__'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Publish Release with the ZIP (tag push)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
           draft: false
-          generate_release_notes: true
-          body: |
-            Built against DuetWebControl `${{ steps.dwc.outputs.ref }}` (${{ steps.dwc.outputs.version }}, `${{ steps.dwc.outputs.sha }}`).
+          body: ${{ steps.changelog.outputs.body }}
           files: plugin/DuetConfigBackup-*.zip
 
       - name: Upload ZIP as an artifact (manual runs)
