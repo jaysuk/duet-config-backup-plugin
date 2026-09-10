@@ -94,6 +94,22 @@
 					<v-text-field v-if="nudgeOverdue" v-model.number="nudgeOverdueDays" type="number" min="1" max="90" density="compact"
 								  variant="outlined" hide-details :label="$t('plugins.duetConfigBackup.configBackup.nudge.triggerOverdueDays')"
 								  style="max-width: 260px;" class="mt-2 ms-8" @update:model-value="saveNudgeSettings" />
+
+					<v-divider class="my-3" />
+					<div class="d-flex align-center ga-2 mb-1">
+						<v-icon size="18">mdi-backup-restore</v-icon>
+						<span class="text-body-2 font-weight-medium">{{ $t("plugins.duetConfigBackup.configBackup.nudge.autoRunHeading") }}</span>
+					</div>
+					<div class="text-caption text-medium-emphasis mb-2">{{ $t("plugins.duetConfigBackup.configBackup.nudge.autoRunNote") }}</div>
+					<v-checkbox v-model="nudgeAutoRun" density="compact" hide-details
+								:label="$t('plugins.duetConfigBackup.configBackup.nudge.autoRunTrigger')" @update:model-value="saveNudgeSettings" />
+					<v-select v-if="nudgeAutoRun" v-model="nudgeAutoRunDestination" :items="autoRunDestinationItems" density="compact"
+							  variant="outlined" hide-details :label="$t('plugins.duetConfigBackup.configBackup.nudge.autoRunDestinationLabel')"
+							  :hint="$t('plugins.duetConfigBackup.configBackup.nudge.autoRunDestinationHint')" persistent-hint
+							  style="max-width: 360px;" class="mt-2 ms-8" @update:model-value="saveNudgeSettings" />
+					<v-alert v-if="autoRunEncryptionConflict" type="warning" variant="tonal" density="compact" class="mt-2 ms-8">
+						{{ autoRunEncryptionConflict }}
+					</v-alert>
 				</v-card-text>
 			</v-card>
 
@@ -196,16 +212,31 @@
 								{{ $t("plugins.duetConfigBackup.configBackup.cloud.setupInstructions") }}
 							</v-btn>
 						</div>
-						<v-alert v-if="!driveOriginOk" type="warning" variant="tonal" density="compact" class="mb-3">
-							{{ $t("plugins.duetConfigBackup.configBackup.drive.unavailableBody") }}
+						<v-text-field v-model="driveClientId" :label="$t('plugins.duetConfigBackup.configBackup.drive.clientIdLabel')"
+									  density="compact" variant="outlined" hide-details class="mb-2" />
+						<div class="text-caption text-medium-emphasis mb-2">{{ $t("plugins.duetConfigBackup.configBackup.drive.clientIdHelp") }}</div>
+						<v-text-field v-model="driveClientSecret" :label="$t('plugins.duetConfigBackup.configBackup.drive.clientSecretLabel')" type="password"
+									  density="compact" variant="outlined" hide-details class="mb-2" />
+						<div class="text-caption text-medium-emphasis mb-2">{{ $t("plugins.duetConfigBackup.configBackup.drive.clientSecretHelp") }}</div>
+						<v-btn color="primary" @click="onSaveDrive">{{ $t("plugins.duetConfigBackup.configBackup.cloud.saveButton") }}</v-btn>
+						<v-alert v-if="driveSaved" type="success" variant="tonal" density="compact" class="mt-3">
+							{{ $t("plugins.duetConfigBackup.configBackup.cloud.saved") }}
 						</v-alert>
-						<template v-else>
-							<v-text-field v-model="driveClientId" :label="$t('plugins.duetConfigBackup.configBackup.drive.clientIdLabel')"
-										  density="compact" variant="outlined" hide-details class="mb-2" />
-							<div class="text-caption text-medium-emphasis mb-2">{{ $t("plugins.duetConfigBackup.configBackup.drive.clientIdHelp") }}</div>
-							<v-btn color="primary" @click="onSaveDrive">{{ $t("plugins.duetConfigBackup.configBackup.cloud.saveButton") }}</v-btn>
-							<v-alert v-if="driveSaved" type="success" variant="tonal" density="compact" class="mt-3">
-								{{ $t("plugins.duetConfigBackup.configBackup.cloud.saved") }}
+
+						<template v-if="driveConfigured">
+							<v-divider class="my-3" />
+							<div class="text-caption text-medium-emphasis mb-2">
+								{{ driveSignedIn
+									? $t("plugins.duetConfigBackup.configBackup.drive.reconnectSignedIn")
+									: $t("plugins.duetConfigBackup.configBackup.drive.reconnectNotYet") }}
+							</div>
+							<v-btn size="small" variant="tonal" prepend-icon="mdi-google" :loading="driveReconnecting" @click="onReconnectDrive">
+								{{ driveSignedIn
+									? $t("plugins.duetConfigBackup.configBackup.drive.reconnectButton")
+									: $t("plugins.duetConfigBackup.configBackup.drive.signInNowButton") }}
+							</v-btn>
+							<v-alert v-if="driveReconnectStatus" :type="driveReconnectStatus.ok ? 'success' : 'error'" variant="tonal" density="compact" class="mt-3">
+								{{ driveReconnectStatus.message }}
 							</v-alert>
 						</template>
 					</v-expansion-panel-text>
@@ -278,6 +309,7 @@
 
 		<PassphraseDialog v-model="setDialogOpen" mode="set" :loading="setBusy" :error="setError" @submit="onSetPassphrase" />
 		<PassphraseDialog v-model="unlockDialogOpen" mode="unlock" :loading="unlockBusy" :error="unlockError" @submit="onUnlockSubmit" />
+		<GoogleDriveSignInDialog />
 	</v-card>
 </template>
 
@@ -296,19 +328,21 @@ import { showConfirmDialog } from "@/composables/useConfirmDialog";
 
 import { login as duetLoginCall, logout as duetLogoutCall } from "dwc-config-backup-core/destinations/duetCloud";
 import { isRepoPrivate } from "dwc-config-backup-core/destinations/github";
-import { isOriginSupported } from "dwc-config-backup-core/destinations/googleDrive";
 import { verifyToken as dropboxVerify } from "dwc-config-backup-core/destinations/dropbox";
 import { verifyConnection as webdavVerify } from "dwc-config-backup-core/destinations/webdav";
 import {
 	disableEncryption, DUET_BACKUP_WEB_URL, enableEncryption, exportEncryptedBundle, getAutoBackupNudgeSettings, getDropboxSettings,
-	getDuetCloudApiUrl, getDuetCloudFifoLimit, getDuetCloudSession, getGithubSettings, getGoogleDriveClientId,
+	getDuetCloudApiUrl, getDuetCloudFifoLimit, getDuetCloudSession, getEncryptPreference, getGithubSettings, getGoogleDriveSettings,
 	getWebDavSettings, importEncryptedBundle, isEncryptionAvailable, isEncryptionEnabled, isSessionUnlocked,
 	lockSession, setAutoBackupNudgeSettings, setDropboxSettings, setDuetCloudFifoLimit,
-	setGithubSettings, setGoogleDriveClientId, setWebDavSettings, unlockSession,
+	setGithubSettings, setGoogleDriveSettings, setWebDavSettings, unlockSession,
 } from "dwc-config-backup-core";
-import type { DuetCloudSession } from "dwc-config-backup-core";
+import type { BackupDestinationId, DuetCloudSession } from "dwc-config-backup-core";
 import { loadCredentialsFromSd, parseCredentialBundle, writeCredentialsToSd } from "dwc-config-backup-core";
 import { defaultMachineIO } from "../model/machineIO";
+import { DESTINATION_IDS, DESTINATION_LABEL_KEYS } from "../model/constants";
+import { reconnectGoogleDrive, resolveDriveRefreshTokenOnSave } from "../model/googleDriveAuth";
+import GoogleDriveSignInDialog from "./GoogleDriveSignInDialog.vue";
 import { buildMachineIdentity } from "dwc-config-backup-core";
 import PassphraseDialog from "./PassphraseDialog.vue";
 
@@ -464,11 +498,41 @@ const nudgeConfigSaved = ref(nudgeSaved.configSaved);
 const nudgeNewMachine = ref(nudgeSaved.newMachine);
 const nudgeOverdue = ref(nudgeSaved.overdue);
 const nudgeOverdueDays = ref(nudgeSaved.overdueDays);
+const nudgeAutoRun = ref(nudgeSaved.autoRun);
+const nudgeAutoRunDestination = ref<BackupDestinationId | null>(nudgeSaved.autoRunDestination);
+
+// Which destinations an unattended auto-run can complete without a prompt (SCHEDULED-BACKUPS-PLAN.md
+// §4.2). Mirrors the same set in autoBackupNudges.ts - kept here rather than imported so the two
+// lists are each right next to the UI/logic they drive. "local" and "drive" are absent by design.
+const AUTO_RUN_ELIGIBLE: ReadonlyArray<BackupDestinationId> = ["duet", "github", "dropbox", "webdav"];
+
+/** Destination picker options: every real destination, with the ones that can't run unattended shown
+ * disabled-with-a-reason rather than hidden (§5.2 - a silently missing entry looks like a bug). */
+const autoRunDestinationItems = computed(() => DESTINATION_IDS.map((id) => {
+	const eligible = AUTO_RUN_ELIGIBLE.includes(id);
+	const encrypted = eligible && getEncryptPreference(id);
+	const label = i18n.global.t(DESTINATION_LABEL_KEYS[id]);
+	const reason = !eligible
+		? i18n.global.t("plugins.duetConfigBackup.configBackup.nudge.autoRunIneligibleReason")
+		: encrypted ? i18n.global.t("plugins.duetConfigBackup.configBackup.nudge.autoRunEncryptedReason") : "";
+	return { value: id, title: reason ? `${label} (${reason})` : label, props: { disabled: !eligible || encrypted } };
+}));
+
+/** Non-empty when the chosen destination has per-backup encryption on - an auto-run to it can never
+ * complete (§4.2), so say so inline rather than letting it silently do nothing. */
+const autoRunEncryptionConflict = computed(() => {
+	const d = nudgeAutoRunDestination.value;
+	if (!d || !nudgeAutoRun.value || !getEncryptPreference(d)) { return ""; }
+	return i18n.global.t("plugins.duetConfigBackup.configBackup.nudge.autoRunEncryptionConflict", {
+		destination: i18n.global.t(DESTINATION_LABEL_KEYS[d]),
+	});
+});
 
 function saveNudgeSettings(): void {
 	setAutoBackupNudgeSettings({
 		configSaved: nudgeConfigSaved.value, newMachine: nudgeNewMachine.value,
 		overdue: nudgeOverdue.value, overdueDays: nudgeOverdueDays.value || 1,
+		autoRun: nudgeAutoRun.value, autoRunDestination: nudgeAutoRunDestination.value,
 	});
 }
 
@@ -531,13 +595,47 @@ async function onSaveGithub(): Promise<void> {
 
 // --- Google Drive ------------------------------------------------------------------------------------
 
-const driveClientId = ref(getGoogleDriveClientId() ?? "");
-const driveConfigured = computed(() => getGoogleDriveClientId() != null);
-const driveOriginOk = isOriginSupported();
+const driveClientId = ref(getGoogleDriveSettings()?.clientId ?? "");
+const driveClientSecret = ref(getGoogleDriveSettings()?.clientSecret ?? "");
+const driveConfigured = computed(() => getGoogleDriveSettings() != null);
 const driveSaved = ref(false);
 function onSaveDrive(): void {
-	setGoogleDriveClientId(driveClientId.value);
+	// See resolveDriveRefreshTokenOnSave's own doc comment: preserves an already-stored refresh token
+	// when the client ID/secret are unchanged, rather than silently discarding it on every re-save.
+	const refreshToken = resolveDriveRefreshTokenOnSave(getGoogleDriveSettings(), driveClientId.value, driveClientSecret.value);
+	setGoogleDriveSettings({ clientId: driveClientId.value, clientSecret: driveClientSecret.value, refreshToken });
 	driveSaved.value = true;
+	driveConnectTick.value++;
+}
+
+// "Reconnect" - runs the sign-in flow on demand from here, rather than leaving it to interrupt a
+// backup. Especially useful in Testing-status Google apps, where the refresh token hard-expires 7 days
+// after CONSENT (see the Drive help): the user can get the device-code prompt out of the way at their
+// own convenience. It always runs a full device flow, because only a fresh consent restarts that 7-day
+// clock - renewing from the existing refresh token would not, however "connected" it looks.
+const driveConnectTick = ref(0);
+const driveReconnecting = ref(false);
+const driveReconnectStatus = ref<{ ok: boolean; message: string } | null>(null);
+const driveSignedIn = computed(() => {
+	void driveConnectTick.value; // re-read localStorage after a save/reconnect
+	return getGoogleDriveSettings()?.refreshToken != null;
+});
+async function onReconnectDrive(): Promise<void> {
+	driveReconnecting.value = true;
+	driveReconnectStatus.value = null;
+	try {
+		// reconnectGoogleDrive(), NOT getGoogleDriveAccessToken() - the latter would return the cached
+		// token or silently renew from the stored refresh token and report success WITHOUT starting a
+		// new consent, so clicking this before the 7-day cap bit would have been a no-op that claimed
+		// otherwise. See googleDriveAuth.ts for why only a fresh device flow restarts that clock.
+		await reconnectGoogleDrive();
+		driveReconnectStatus.value = { ok: true, message: i18n.global.t("plugins.duetConfigBackup.configBackup.drive.reconnectOk") };
+	} catch (e) {
+		driveReconnectStatus.value = { ok: false, message: e instanceof Error ? e.message : String(e) };
+	} finally {
+		driveReconnecting.value = false;
+		driveConnectTick.value++;
+	}
 }
 
 // --- Dropbox -------------------------------------------------------------------------------------------
@@ -604,8 +702,8 @@ watch(sessionUnlocked, (unlocked) => {
 		githubToken.value = github.token;
 		githubMachineName.value = github.machineName ?? "";
 	}
-	const drive = getGoogleDriveClientId();
-	if (drive != null) { driveClientId.value = drive; }
+	const drive = getGoogleDriveSettings();
+	if (drive != null) { driveClientId.value = drive.clientId; driveClientSecret.value = drive.clientSecret; }
 	const dropbox = getDropboxSettings();
 	if (dropbox) { dropboxToken.value = dropbox.token; }
 	const webdav = getWebDavSettings();
