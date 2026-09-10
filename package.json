@@ -1,6 +1,6 @@
 {
   "name": "duet-config-backup-plugin",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/jaysuk/duet-config-backup-plugin",
