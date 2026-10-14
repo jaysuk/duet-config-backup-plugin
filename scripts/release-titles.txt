@@ -1,0 +1,25 @@
+# GitHub Release titles for the Duet Config Backup plugin, one per line (blank lines and # comments ignored).
+# Picked by version index (semver-sorted), wrapping if it runs out. Backup-and-restore puns - top up
+# the list as it gets low (the release workflow warns when few unused titles remain).
+Back It Up
+Restore Order
+Save Point
+Copy That
+Safe and Sound
+Plan B
+Backup Dancer
+Snapshot Judgment
+Undo Button
+Second Copy
+Rollback Rhapsody
+Mirror, Mirror
+Spare Key
+Insurance Policy
+Archive of Our Own
+Version Control Freak
+Disaster Recovery Mode
+Redundant, in a Good Way
+Time Machine
+Fail-Safe Harbour
+Config Confidence
+Never Lose Your Place
